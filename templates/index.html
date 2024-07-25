@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-xcale=1.0, user-scalable=1">
+    <title>Sentimen Analisis Instagram</title>
+    <style>
+    
+    body{
+        background-color: #f0f0f0;
+    }
+    .body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 80vh;
+        
+    }
+    h1 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    form {
+        width: 100%;
+        max-width: 600px; /* Maksimal lebar form */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
+    }
+    .input-container {
+        display: grid;
+        grid-template-columns: 8fr 1fr 1fr;
+        gap: 30px;
+        width: 100%;
+        margin-top: 20px;
+
+    }
+    .single-input-container input {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 100%;
+    }
+    .input-url, .input-jumlah {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 100%;
+        /* margin-right: 10px; */
+    }
+    .input-container button, .single-input-container button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        background-color: #4CAF50;
+        color: white;
+        cursor: pointer;
+    }
+    .input-container button:hover, .single-input-container button:hover {
+        background-color: #45a049;
+    }
+    .single-input-container {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+        margin-bottom: 10px;
+
+    }
+    .single-input-container input {
+        flex: 1; /* Input akan mengisi ruang yang tersedia */
+        margin-right: 10px;
+    }
+    .table {
+        display: none;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    table {
+        border-collapse: collapse;
+    }
+
+    .judul{
+        margin-top: 20px;
+        margin-bottom: 40px;
+    }
+
+    .test {
+        height: 100px;
+    }
+    .pie-chart {
+        width:  200px;
+        height:  200px;
+        border-radius:  50%;
+        background-color: green;
+        display: block;
+
+        /* background: repeating-conic-gradient(
+            from 0deg,
+            #01b106 0deg 200deg,
+            #a70000 200deg 360deg
+        ); */
+    }
+            
+    </style>
+</head>
+<body>
+    <div class="judul"><h1 >Sentimen Analisis Instagram</h1></div>
+    <div class="body">
+        <table id="table" class="table">
+            <tbody>
+                <tr>
+                    <th colspan="2" id="name"></th>
+                </tr>
+                <tr>
+                    <th colspan="2" >
+                        <div class="pie-chart" id="chart"></div>
+                    </th>
+                </tr>
+                <tr>
+                    <td id="score_positive">100</td>
+                    <td id="score_negative">20</td>
+                </tr>
+                <tr>
+                    <td>Positive</td>
+                    <td>Negative</td>
+                </tr>
+            </tbody>
+        </table>
+        <h2 id="hasil_sentiment"></h2>
+        <form id="inputForm">
+            <div class="single-input-container">
+                <input type="text" name="text" id="text" placeholder="kalimat">
+                <button type="button" id="submitButtonKalimat">Enter</button>
+            </div>
+            <div class="input-container">
+                <input type="text" class="input-url" name="url" id="url" placeholder="url">
+                <input type="text" class="input-jumlah" name="jumlah" id="jumlahInput" placeholder="jumlah">
+                <button type="button" id="submitButton">Enter</button>
+            </div>
+        </form>
+    </div>
+    <table id="list">
+        <tbody></tbody>
+    </table>
+    
+
+
+    <script>
+        document.getElementById('submitButton').addEventListener('click', function() {
+            var url = document.getElementById('url').value;
+            var jumlah = document.getElementById('jumlahInput').value;
+            var data = { url: url, jumlah: jumlah };
+            // Kirim data ke API
+            fetch('http://127.0.0.1:5000/sentiment/ig', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                // document.getElementById("crawl").innerText = (data.positive + data.negative) + " crawl"
+                document.getElementById("score_positive").innerText = data.positive
+                document.getElementById("score_negative").innerText = data.negative
+                
+                let positif = (data.positive / (data.positive + data.negative)) * 360
+                let negatif = (data.negative / (data.positive + data.negative)) * 360
+                
+                var table = document.getElementById("table") 
+                table.style.display="block"
+                document.getElementById("hasil_sentiment").innerText = ""
+                var cek = document.getElementById('chart')
+                // cek.style.display = 'block'
+                let gradient = `conic-gradient(from 0deg,#01b106 0deg ${positif}deg,#a70000 ${positif}deg 360deg)`
+                cek.style.background = gradient
+                
+                const htmlContent = data.sentiment.map(item => `<tr><td  >${item.username}</td><td  >${item.text}</td><td  >${item.sentiment}</td></tr>`).join('');
+
+                document.querySelector('#list tbody').innerHTML = htmlContent || "undefind"
+                console.log(htmlContent)
+
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Tangani error jika ada
+            });
+
+            fetch('http://127.0.0.1:5000/profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                document.getElementById("name").innerHTML = data.name
+                // Lakukan apa pun setelah mendapatkan respons dari API
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Tangani error jika ada
+            });
+            
+        });
+
+        document.getElementById('submitButtonKalimat').addEventListener('click', function() {
+            var text = document.getElementById('text').value;
+            data = { text : text }
+            console.log("inikalimatnya",text)
+            // Kirim data ke API
+
+            
+            console.log("inikalimatnya",text)
+            fetch('http://127.0.0.1:5000/sentiment/text', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                document.getElementById("hasil_sentiment").innerText = data.data
+
+                // var cek = document.getElementById('chart')
+                // cek.style.display = 'block'
+                var table = document.getElementById("table") 
+                table.style.display="none"
+                // Lakukan apa pun setelah mendapatkan respons dari API
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Tangani error jika ada
+            });
+        });
+    </script>
+</body>
+</html>
