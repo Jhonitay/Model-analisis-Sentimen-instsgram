@@ -1,0 +1,13 @@
+streamlit
+pandas==1.4.2
+numpy==1.24.4
+scikit_learn
+pip==24.0
+nltk
+Sastrawi
+imblearn
+joblib
+imbalanced-learn
+scikit-learn
+matplotlib
+wordcloud
